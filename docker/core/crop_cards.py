@@ -1,14 +1,15 @@
 import glob
 from typing import List
 import cv2
-from cv2 import Mat
 import os
 import tqdm
-import copy
 import numpy as np
 from ultralytics import YOLO
 from ultralytics.engine.results import Boxes, Results 
 from PIL import Image
+import torch
+
+DEVICE = 0 if torch.cuda.is_available() else 'cpu'
 def crop():
     model = YOLO('card/card/weights/best.pt')
 
@@ -33,9 +34,9 @@ def crop():
             cv2.imwrite(f'./datasets/cropped/{folder_name}/{file_name}', crop_img)
 
 def crop_single(image: Image):
-    model = YOLO('card/card/weights/best.pt')
+    model = YOLO('./models/best.pt')
 
-    results: List[Results] = model.predict(image, device='0', conf=0.25, save_conf=True)
+    results: List[Results] = model.predict(image, device=DEVICE, conf=0.25, save_conf=True)
     crop_img = np.asarray(image)
 
     box: Boxes  = results[0].boxes

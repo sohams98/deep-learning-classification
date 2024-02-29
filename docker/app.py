@@ -4,8 +4,11 @@ import torch
 from torchvision import transforms
 from PIL import Image
 from core.crop_cards import crop_single
-from core.model import ConvolutionModel
+from core.model import load_model
 import numpy as np
+import base64
+import cv2
+import logging
 
 app = Flask(__name__)
 cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
@@ -26,6 +29,8 @@ LABELS_DICT = {
     9: 'svk_id',
 }
 
+MODEL = load_model('models/cropped_best_model.pth', 640, 480)
+
 def pre_process_image(image: np.ndarray, is_cropped: bool, crop_image: bool) -> torch.Tensor:
     image = Image.fromarray(image)
     if not is_cropped and crop_image:
@@ -39,29 +44,35 @@ def pre_process_image(image: np.ndarray, is_cropped: bool, crop_image: bool) -> 
     image = image.view(-1, *image.shape)
     return image.to(DEVICE)
 
-def load_model(model_dir, width, height):
-    model = ConvolutionModel(width, height, is_bw=False)
-    model.load_state_dict(torch.load(model_dir))
-    model.to(DEVICE)
-    model.eval()
-    return model
+
+
+def to_array(image: str) -> np.ndarray:
+    image = bytearray(image, 'utf-8')
+    image = base64.decodebytes(image)
+    image = np.frombuffer(image, dtype=np.uint8)
+    image = cv2.imdecode(image, cv2.IMREAD_COLOR)
+    return image
 
 @app.route('/classify', methods=['POST'])
 def classify():
     try:
         event = request.get_json()
         image = event['image']
-        is_cropped = event['is_cropped']
-        image = pre_process_image(image, is_cropped, True)
-        model = load_model('models/cropped_best_model.pth', 640, 480)
+        image = to_array(image)
 
-        output = model(image)
+        is_cropped = event['is_cropped']
+        
+        image = pre_process_image(image, is_cropped, True)
+        # model = load_model('models/cropped_best_model.pth', 640, 480)
+
+        output = MODEL(image)
         probability, predicted = torch.max(output, 1)
         return {
             'predicted': LABELS_DICT[predicted.item()],
             'probability': torch.exp(probability).item()
         }
     except Exception as e:
+        logging.exception(e)
         return {
-            'error': str(e)
+            'error': e
         }

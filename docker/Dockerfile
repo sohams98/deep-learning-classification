@@ -50,6 +50,7 @@ ADD requirements.txt /usr/src/app/requirements.txt
 RUN pip install -r /usr/src/app/requirements.txt --no-cache-dir
 
 # copy project
+ADD ./models /usr/src/app/models
 ADD . /usr/src/app
 
 # create user group and user
@@ -61,3 +62,5 @@ RUN groupadd -g ${gid} ${group} && useradd -u ${uid} -g ${group} -s /bin/sh ${us
 RUN chown -R ${user}:${group} /usr/src
 RUN chown -R ${user}:${group} /home
 RUN chmod -R 775 /usr/src/app
+
+ENTRYPOINT ["/usr/src/app/entrypoint.sh"]

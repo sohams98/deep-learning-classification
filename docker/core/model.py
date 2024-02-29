@@ -4,6 +4,16 @@ from torchvision import transforms
 from PIL import Image
 import glob 
 import numpy as np
+import torch
+
+DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+def load_model(model_dir, width, height):
+    model = ConvolutionModel(width, height, is_bw=False)
+    model.to(DEVICE)
+    model.load_state_dict(torch.load(model_dir))
+    model.eval()
+    return model
 
 class ConvolutionModel(nn.Module):
     def __init__(self, input_width=640, input_height=480, num_classes=10, is_bw=False):

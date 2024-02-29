@@ -1,0 +1,7 @@
+Flask[async]
+Flask-Cors
+gunicorn
+greenlet>=0.4.17
+gevent>=20.9
+Pillow
+opencv-python-headless
