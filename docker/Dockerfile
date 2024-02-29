@@ -3,14 +3,10 @@ FROM nvidia/cuda:12.3.2-runtime-ubuntu22.04
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/Utc
 ENV PYTHONFAULTHANDLER=1
+ENV export PYTHONPATH="$PYTHONPATH:/opt/:/usr/src/app/"
 # set work directory
 WORKDIR /usr/src/app
 # this is important for cv2 
-RUN export PYTHONPATH="$PYTHONPATH:/opt/:/usr/src/app/"
-
-# set environment variables
-ARG GIT_TOKEN
-ENV GIT_TOKEN ${GIT_TOKEN}
 
 RUN apt-get update && \
     apt install -y --no-install-recommends \
@@ -50,17 +46,6 @@ ADD requirements.txt /usr/src/app/requirements.txt
 RUN pip install -r /usr/src/app/requirements.txt --no-cache-dir
 
 # copy project
-ADD ./models /usr/src/app/models
 ADD . /usr/src/app
-
-# create user group and user
-ARG user=appuser
-ARG group=appuser
-ARG uid=1000
-ARG gid=1000
-RUN groupadd -g ${gid} ${group} && useradd -u ${uid} -g ${group} -s /bin/sh ${user}
-RUN chown -R ${user}:${group} /usr/src
-RUN chown -R ${user}:${group} /home
-RUN chmod -R 775 /usr/src/app
 
 ENTRYPOINT ["/usr/src/app/entrypoint.sh"]
