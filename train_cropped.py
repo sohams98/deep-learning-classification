@@ -57,7 +57,8 @@ def train(model: nn.Module, train_loader: DataLoader, val_loader: DataLoader):
             best_model['epoch'] = epoch
             best_model['model'] = model.state_dict()
             best_model['optimizer'] = optimizer.state_dict()
-
+    best_model.to('cpu')
+    model.to('cpu')
     torch.save(best_model, f'models/{MODEL_NAME}_best_model_parameters.pth')
     torch.save(model.state_dict(), f'models/{MODEL_NAME}_best_model.pth')
 
